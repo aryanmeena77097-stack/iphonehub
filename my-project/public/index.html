@@ -1,0 +1,27 @@
+async function startPayment(amount, name, phone, email) {
+  try {
+    const res = await fetch("/api/create-payment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amount: amount,          // e.g., 2500
+        customer_name: name,     // e.g., "Ali Khan"
+        customer_phone: phone,   // e.g., "9999999999"
+        customer_email: email,   // optional
+        method: "upi"            // "upi", "bank", ya "usdt"
+      }),
+    });
+
+    const data = await res.json();
+
+    if (data.success && data.checkout_url) {
+      // Customer ko hosted payment page par redirect karein
+      window.location.href = data.checkout_url;
+    } else {
+      alert("Payment initiate nahi ho paya: " + (data.error || "Unknown error"));
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Network error! Please try again.");
+  }
+}
