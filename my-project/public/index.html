@@ -1,21 +1,129 @@
-async function startPayment(amount, name, phone, email = "", method = "upi") {
-  const res = await fetch("/api/create-payment", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      amount,
-      customer_name: name,
-      customer_phone: phone,
-      customer_email: email,
-      method,
-    }),
-  });
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Instant Checkout — Sunpays</title>
+  <style>
+    * { box-sizing: border-box; font-family: Arial, sans-serif; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 20px;
+    }
+    .card {
+      width: 100%;
+      max-width: 420px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+    }
+    h1 { margin: 0 0 8px; font-size: 22px; }
+    p { margin: 0 0 20px; color: #94a3b8; font-size: 14px; }
+    label { display: block; font-size: 13px; margin-bottom: 6px; color: #cbd5e1; }
+    input, select {
+      width: 100%;
+      padding: 11px 12px;
+      margin-bottom: 14px;
+      border-radius: 8px;
+      border: 1px solid #475569;
+      background: #0f172a;
+      color: #fff;
+      font-size: 14px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: #22c55e;
+      color: #052e16;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    #status { margin-top: 12px; font-size: 13px; color: #f87171; min-height: 18px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Complete Payment</h1>
+    <p>Enter details to generate payment checkout link.</p>
 
-  const data = await res.json();
+    <form id="payForm">
+      <label for="amount">Amount (INR)</label>
+      <input id="amount" type="number" min="1" step="any" value="100" required />
 
-  if (data.success && data.checkout_url) {
-    window.location.href = data.checkout_url;
-  } else {
-    alert(data.error || "Payment start nahi ho paya");
-  }
-}
+      <label for="customer_name">Full Name</label>
+      <input id="customer_name" type="text" placeholder="Rahul Sharma" required />
+
+      <label for="customer_phone">Phone Number</label>
+      <input id="customer_phone" type="tel" placeholder="9876543210" required />
+
+      <label for="customer_email">Email (Optional)</label>
+      <input id="customer_email" type="email" placeholder="rahul@example.com" />
+
+      <label for="method">Payment Method</label>
+      <select id="method">
+        <option value="upi" selected>UPI</option>
+        <option value="bank">Bank</option>
+        <option value="usdt">USDT</option>
+      </select>
+
+      <button id="payBtn" type="submit">Pay Now</button>
+      <div id="status"></div>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById("payForm");
+    const btn = document.getElementById("payBtn");
+    const statusEl = document.getElementById("status");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      statusEl.textContent = "";
+      btn.disabled = true;
+      btn.textContent = "Redirecting...";
+
+      try {
+        const payload = {
+          amount: Number(document.getElementById("amount").value),
+          customer_name: document.getElementById("customer_name").value.trim(),
+          customer_phone: document.getElementById("customer_phone").value.trim(),
+          customer_email: document.getElementById("customer_email").value.trim(),
+          method: document.getElementById("method").value,
+        };
+
+        const res = await fetch("/api/create-payment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await res.json();
+
+        if (data.success && data.checkout_url) {
+          window.location.href = data.checkout_url;
+        } else {
+          statusEl.textContent = data.error || "Payment link generate nahi ho paya.";
+          btn.disabled = false;
+          btn.textContent = "Pay Now";
+        }
+      } catch (err) {
+        statusEl.textContent = "Network error. Dobara try karein.";
+        btn.disabled = false;
+        btn.textContent = "Pay Now";
+      }
+    });
+  </script>
+</body>
+</html>
