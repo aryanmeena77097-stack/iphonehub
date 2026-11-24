@@ -1,5 +1,6 @@
 {
-  "name": "sunpay-vercel",
+  "name": "sunpay-landing",
+  "version": "1.0.0",
   "private": true,
   "type": "module"
 }
